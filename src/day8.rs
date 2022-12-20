@@ -1,30 +1,33 @@
 pub fn day8() {
-    // let input = std::fs::read_to_string("day8").unwrap();
-    let input = String::from("30373\n25512\n65332\n33549\n35390");
+    let input = std::fs::read_to_string("day8").unwrap();
+    // let input = String::from("30373\n25512\n65332\n33549\n35390");
     let forest: Vec<Vec<u8>> = input.lines()
         .map(|row| row.chars().map(|ch| ch as u8 - '0' as u8).collect())
         .collect();
     
     // dbg!(&forest);
     // dbg!(is_visible(&forest, 2, 1));
-    dbg!(scenic_score(&forest, 0, 0));
-    dbg!(scenic_score(&forest, 1, 2));
-    dbg!(scenic_score(&forest, 3, 2));
+    // dbg!(scenic_score(&forest, 0, 0));
+    // dbg!(scenic_score(&forest, 0, 4));
+    // dbg!(scenic_score(&forest, 4, 0));
+    // dbg!(scenic_score(&forest, 4, 4));
+    // dbg!(scenic_score(&forest, 1, 2));
+    // dbg!(scenic_score(&forest, 3, 1));
     // let total_visible = (0..forest.len()).fold(0, |total, row| 
     //         total + (0..forest[row].len()).filter(|col| is_visible(&forest, row, *col)).count()
     // );        
 
     // println!("Total visible: {total_visible}");
 
-    // let mut best_score = 0;
-    // for row in 0..forest.len() {
-    //     for col in 0..forest[0].len() {
-    //         let score = scenic_score(&forest, row, col);
-    //         if score > best_score { best_score = score }
-    //     }
-    // }
+    let mut best_score = 0;
+    for row in 0..forest.len() {
+        for col in 0..forest[0].len() {
+            let score = scenic_score(&forest, row, col);
+            if score > best_score { best_score = score }
+        }
+    }
 
-    // println!("bestscore = {best_score}");
+    println!("bestscore = {best_score}");
 }
 
 fn scenic_score(forest: &Vec<Vec<u8>>, row: usize, col: usize) -> usize {
