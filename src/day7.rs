@@ -12,13 +12,13 @@ impl Dir {
     fn new(parent_dir: &str) -> Dir {
         Dir {
             dir_size: 0, 
-            inclusive_size: usize::MAX,
+            inclusive_size: 0,
             subdirs: Vec::new(), 
             parent_dir: parent_dir.to_string() 
         }
     }
 
-    fn add_subdir(&mut self, subdir: &str) { self.subdirs.push(subdir.to_string()) }
+    fn add_subdir(&mut self, subdir: &str) { self.subdirs.push(subdir.to_string(), ) }
 
     fn add_file(&mut self, file_size: usize) { self.dir_size += file_size }
 }
@@ -37,11 +37,13 @@ pub fn day7() {
     // let input = String::from("$ cd /\n$ ls\ndir a\n14848514 b.txt\n8504156 c.dat\ndir d\n$ cd a\n$ ls\ndir e\n29116 f\n2557 g\n62596 h.lst\n$ cd e\n$ ls\n584 i\n$ cd ..\n$ cd ..\n$ cd d\n$ ls\n4060174 j\n8033020 d.log\n5626152 d.ext\n7214296 k");
     let mut dirs: HashMap<String, Dir> = HashMap::new();
 
-    let mut curr_dir = String::from("/");
-    dirs.insert(curr_dir.clone(), Dir::new(&curr_dir));
+    // let mut curr_dir = String::from("/");
+    let mut curr_dir = String::new();
+    // dirs.insert(curr_dir.clone(), Dir::new(&curr_dir));
 
     for cmd in input.split('$').map(|cmd| cmd.trim()) {
-        // dbg!(cmd);
+        dbg!(cmd);
+        dbg!(&curr_dir);
         // print_dirs(&dirs);       
         if cmd.trim().starts_with("cd") {
             process_cd(cmd, &mut dirs, &mut curr_dir);
@@ -50,15 +52,26 @@ pub fn day7() {
         }
     }
 
+    print_dirs(&dirs);       
+
     calc_inclusive_sizes(&String::from("/"), &mut dirs);
 
     print_dirs(&dirs);       
 
-    let sum = dirs.iter().map(|(_, dir)| dir.inclusive_size)
-        .filter(|inclusive_size| *inclusive_size <= 100000)
-        .fold(0, |sum, inclusive_size| sum + inclusive_size);
+    // let sum = dirs.iter().map(|(_, dir)| dir.inclusive_size)
+    //     .filter(|inclusive_size| *inclusive_size <= 100000)
+    //     .fold(0, |sum, inclusive_size| sum + inclusive_size);
 
-    println!("{sum}");
+    // println!("sum is: {sum}");
+
+    let total_used = dirs.get("/").unwrap().inclusive_size;
+
+    let smallest = dirs.iter().map(|(_, dir)| dir.inclusive_size)
+        .filter(|inc_size| 70000000 - total_used + inc_size >= 30000000 )
+        .reduce(|smallest, inc_size| if smallest < inc_size { smallest } else { inc_size })
+        .unwrap();
+
+    println!("{smallest}");
 }
 
 fn process_cd(cmd: &str, dirs: &mut HashMap<String, Dir>, curr_dir: &mut String) {
@@ -66,19 +79,31 @@ fn process_cd(cmd: &str, dirs: &mut HashMap<String, Dir>, curr_dir: &mut String)
 
     if cd_dir.trim() == ".." {
         *curr_dir = dirs.get(curr_dir).unwrap().parent_dir.to_string();
+    } else if cd_dir.trim() == "/" {
+        *curr_dir = String::from("/");
+        dirs.insert(curr_dir.clone(), Dir::new(&curr_dir));
+    } else if curr_dir == "/" {
+        *curr_dir = format!("/{cd_dir}");
+        dirs.insert(curr_dir.clone(), Dir::new("/"));
     } else {
-        // dirs.insert(cd_dir.trim().to_string(), Dir::new(curr_dir));
-        *curr_dir = cd_dir.trim().to_string();
+        let new_dir = format!("{curr_dir}/{}", cd_dir.trim().to_string());
+
+        dirs.insert(new_dir.clone(), Dir::new(&curr_dir));
+        *curr_dir = new_dir;
     }
 }
 
 fn process_ls(cmd: &str, dirs: &mut HashMap<String, Dir>, curr_dir: &mut String) {
     for line in cmd.lines().skip(1) {
         let (file_size, subdir) = line.split_once(' ').unwrap();
-        
+        dbg!(&curr_dir);
         if line.starts_with("dir") {
-            dirs.get_mut(curr_dir).unwrap().add_subdir(subdir);
-            dirs.insert(subdir.to_string(), Dir::new(curr_dir));
+            if curr_dir == "/" {
+                dirs.get_mut(curr_dir).unwrap().add_subdir(&format!("/{subdir}"));
+            } else {
+                dirs.get_mut(curr_dir).unwrap().add_subdir(&format!("{curr_dir}/{subdir}"));
+            }
+            // dirs.insert(format!("{curr_dir}/{subdir}"), Dir::new(&curr_dir));
             continue;
         }
 
@@ -87,6 +112,7 @@ fn process_ls(cmd: &str, dirs: &mut HashMap<String, Dir>, curr_dir: &mut String)
 }
 
 fn calc_inclusive_sizes(curr_dir: &String, dirs: &mut HashMap<String, Dir>) -> usize {
+    dbg!(curr_dir);
     let mut size = dirs.get(curr_dir).unwrap().dir_size;
 
     for subdir in dirs.get(curr_dir).unwrap().subdirs.clone() {
@@ -101,11 +127,3 @@ fn print_dirs(dirs: &HashMap<String, Dir>) {
     dirs.iter().for_each(|(hash, dir)| println!("{hash}:\t{dir}"));
     println!();
 }
-
-/*
-/ -> twjcmp =
-
-
-
-
-*/
